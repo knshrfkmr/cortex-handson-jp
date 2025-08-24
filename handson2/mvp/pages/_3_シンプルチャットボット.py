@@ -7,6 +7,8 @@
 # 使用する機能: AI_COMPLETE関数によるAI対話
 # ペルソナ設定、よくある質問、チャット統計を含む
 # =========================================================
+# 2025/8/25 get_ai_responseを\nを改行コードとして置換するかたちへ変更
+# =========================================================
 
 import streamlit as st
 import pandas as pd
@@ -47,13 +49,25 @@ def get_ai_response(model: str, prompt: str):
         
         # 通常のテキスト応答
         query = f"""
-        SELECT AI_COMPLETE(
+        SELECT 『★★★修正対象★★★』(
             '{model}',
             '{escaped_prompt}'
         ) as response
         """
         result = session.sql(query).collect()
-        return result[0]['RESPONSE'] if result else "応答を取得できませんでした。"
+        if result:
+            ai_response = result[0]['RESPONSE']
+            
+            # 文字列を改行コード`\n`に置換
+            cleaned_response = ai_response.replace('\\n', '\n')
+            
+            # 連続する空白や改行を正規化
+            import re
+            normalized_response = re.sub(r'\s{2,}', '\n', cleaned_response)
+            
+            return normalized_response
+        else:
+            return "応答を取得できませんでした。"
     except Exception as e:
         return f"エラーが発生しました: {str(e)}"
 
